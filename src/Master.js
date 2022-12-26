@@ -21,12 +21,15 @@ import CreateStream from "./CreateStream";
 import EditStream from "./EditStream";
 import "./Master.css";
 import { formatEther, formatUnits, parseUnits } from "ethers/lib/utils";
+import {
+  getProvider,
+  getWalletAddress,
+} from "./services/wallet-service";
 
 class Master extends Component {
   constructor(props) {
     super(props);
     this.state = {
-
       ethers: {},
       provider: {},
       sf: {},
@@ -62,11 +65,8 @@ class Master extends Component {
     this.getTotalOutflows = this.getTotalOutflows.bind(this);
   }
 
-
   async initEthers() {
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-
-
+    const provider = getProvider();
     if (provider) {
       // const sf = new SuperfluidSDK.Framework({
       //     // ether: new ethers(provider)
@@ -91,7 +91,7 @@ class Master extends Component {
       });
 
       await this.getAccount();
-
+  
       if (this.state.account.length > 0) {
         await this.getBalance();
         await this.listOutFlows();
@@ -104,12 +104,12 @@ class Master extends Component {
   }
 
   async getAccount() {
-    const acct = await window.ethereum.request({ method: "eth_accounts" });
-    console.log("acc: ", acct);
+    const acct = await getWalletAddress();
+    console.log("acct1",acct)
     if (acct.length > 0) {
       this.setState({
         connected: true,
-        account: acct[0],
+        account: acct,
       });
     } else if (acct.length === 0) {
       this.setState({
@@ -117,7 +117,6 @@ class Master extends Component {
         account: "",
       });
     }
-
     let currentAccount = acct;
     window.ethereum
       .request({ method: "eth_accounts" })
@@ -131,6 +130,7 @@ class Master extends Component {
 
     //handles a change in connected accounts
     function handleAccountsChanged(accounts) {
+      console.log("accounts: ", accounts);
       if (accounts.length === 0) {
         // MetaMask is locked or the user has not connected any accounts
         console.log("Please connect to MetaMask.");
@@ -147,6 +147,10 @@ class Master extends Component {
   }
 
   isConnected() {
+    console.log(
+      "window.ethereum._state.accounts: ",
+      window.ethereum._state.accounts
+    );
     let accts = window.ethereum._state.accounts;
 
     if (accts.length === 0) {
@@ -160,20 +164,20 @@ class Master extends Component {
   }
 
   async getBalance() {
-    console.log("this.state.account", this.state.account);
+    console.log("this.state.account Balance", this.state.account);
     const fUSDCxBal = await this.state.fUSDCx.balanceOf(this.state.account);
     // .call({ from: this.state.account });
     console.log("first fUSDCxBal", fUSDCxBal);
-    console.log("fUSDCxBal", formatEther(fUSDCxBal));
-    console.log("fUSDCxBal", formatUnits(fUSDCxBal, "wei"));
-    console.log("fUSDCxBal all", ethers.utils.parseUnits("1.0", 18));
-    console.log(
-      "fUSDCxBal all",
-      parseUnits("1042.436851850477664232", "ether")
-    );
+    console.log("fUSDCxBal1", formatEther(fUSDCxBal));
+    console.log("fUSDCxBal2", formatUnits(fUSDCxBal, "wei"));
+    console.log("fUSDCxBal all1", ethers.utils.parseUnits("1.0", 18));
+    // console.log(
+    //   "fUSDCxBal all2",
+    //   parseUnits(fUSDCxBal, "wei")
+    // );
     const adjustedfUSDCx = Number(
       new BigNumber(formatUnits(fUSDCxBal, "wei")).shiftedBy(-18)
-    ).toFixed(5);
+    ).toFixed(5)
     console.log("adjustedfUSDCx", adjustedfUSDCx);
     this.setState({
       fUSDCxBal: adjustedfUSDCx,
@@ -223,7 +227,6 @@ class Master extends Component {
       .send({ from: this.state.account, type: "0x2" })
       .then(console.log);
   }
-
 
   async editStream(stream) {
     let address = stream.address;

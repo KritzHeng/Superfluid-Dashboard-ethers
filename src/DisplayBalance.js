@@ -13,6 +13,7 @@ class DisplayBalance extends Component {
   }
 
   loadBalance() {
+    console.log("loadBalance")
     console.log("fUSDCxBal", this.props.fUSDCxBal)
     console.log("balance", this.state.balance)
     console.log("outflows", this.props.outflows)
